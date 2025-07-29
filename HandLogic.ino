@@ -37,6 +37,11 @@ bool prevEmgState = LOW;
 unsigned long emgStateStartTime = 0;
 bool emgTriggerReady = false;
 
+// EMG flash timing
+unsigned long emgFlashStartTime = 0;
+const unsigned long emgFlashDuration = 250;  // ms
+bool emgFlashActive = false;
+
 // Control Flags
 bool handClosed = false;
 bool homingComplete = false;
@@ -76,19 +81,29 @@ void loop() {
 
   // LED Feedback
 
-  // LED 2 (PWM Blue) shows current
-  int blueBrightness = map(filteredCurrent, 20, currentThreshold, 0, 255);
-  blueBrightness = constrain(blueBrightness, 0, 255);
-  analogWrite(blue2Pin, blueBrightness);
-  analogWrite(red2Pin, 0);
-  analogWrite(green2Pin, 0);
+  // LED 2 (PWM Blue) shows current, higher current = brighter
+  if (emgFlashActive && (now - emgFlashStartTime < emgFlashDuration)) {
+    // Flash red
+    analogWrite(red2Pin, 255);
+    analogWrite(green2Pin, 0);
+    analogWrite(blue2Pin, 0);
+  } else {
+    // Return to blue current-based feedback
+    emgFlashActive = false;  // Flash done
+    int blueBrightness = map(filteredCurrent, 20, currentThreshold, 255, 0);
+    blueBrightness = constrain(blueBrightness, 0, 255);
+    analogWrite(blue2Pin, blueBrightness);
+    analogWrite(red2Pin, 0);
+    analogWrite(green2Pin, 0);
+  }
 
   // LED 1 (Red) lights up if either Hall sensor is active
   bool hallActive = hallOpenLatched || hallCloseLatched;
 
-  analogWrite(red1Pin, hallActive ? 255 : 0);   // Turn on red if Hall triggered
-  analogWrite(green1Pin, 0);
-  analogWrite(blue1Pin, 0);
+  // LED currently in mechanism is defective
+  //analogWrite(red1Pin, hallActive ? 255 : 0);   // Turn on red if Hall triggered
+  //analogWrite(green1Pin, 0);
+  //analogWrite(blue1Pin, 0);
 
   // Hall Latching Logic
   if (!handClosed) { // Opening
@@ -139,6 +154,9 @@ void loop() {
       if (emgState == HIGH && !emgTriggerReady) {
         Serial.println("EMG Trigger Detected");
         emgTriggerReady = true;
+
+        emgFlashActive = true;
+        emgFlashStartTime = now;
 
         if (handClosed) {
           // Start opening
