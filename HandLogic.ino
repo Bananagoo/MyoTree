@@ -42,6 +42,11 @@ unsigned long emgFlashStartTime = 0;
 const unsigned long emgFlashDuration = 250;  // ms
 bool emgFlashActive = false;
 
+// Hall flash timing
+unsigned long hallFlashStartTime = 0;
+const unsigned long hallFlashDuration = 200;  // ms
+bool hallFlashActive = false;
+
 // Control Flags
 bool handClosed = false;
 bool homingComplete = false;
@@ -81,16 +86,22 @@ void loop() {
 
   // LED Feedback
 
-  // LED 2 (PWM Blue) shows current, higher current = brighter
+  // LED 2 shows status
   if (emgFlashActive && (now - emgFlashStartTime < emgFlashDuration)) {
     // Flash red
     analogWrite(red2Pin, 255);
     analogWrite(green2Pin, 0);
     analogWrite(blue2Pin, 0);
+  } else if (hallFlashActive && (now - hallFlashStartTime < hallFlashDuration)) {
+    // Flash green
+    analogWrite(red2Pin, 0);
+    analogWrite(green2Pin, 255);
+    analogWrite(blue2Pin, 0);
   } else {
     // Return to blue current-based feedback
-    emgFlashActive = false;  // Flash done
-    int blueBrightness = map(filteredCurrent, 20, currentThreshold, 255, 0);
+    emgFlashActive = false;
+    hallFlashActive = false;
+    int blueBrightness = map(filteredCurrent, 20, currentThreshold, 0, 255);  // higher current = brighter
     blueBrightness = constrain(blueBrightness, 0, 255);
     analogWrite(blue2Pin, blueBrightness);
     analogWrite(red2Pin, 0);
@@ -110,6 +121,8 @@ void loop() {
     if (hallOpenValue <= hallOpenThreshold && hallOpenReady) {
       hallOpenLatched = true;
       hallOpenReady = false;
+      hallFlashActive = true;
+      hallFlashStartTime = now;
       Serial.println("Open limit triggered.");
     }
     if (hallOpenValue > hallOpenReleaseThreshold) hallOpenReady = true;
@@ -119,6 +132,8 @@ void loop() {
     if (hallCloseValue <= hallCloseThreshold && hallCloseReady) {
       hallCloseLatched = true;
       hallCloseReady = false;
+      hallFlashActive = true;
+      hallFlashStartTime = now;
       Serial.println("Close limit triggered.");
     }
     if (hallCloseValue > hallCloseReleaseThreshold) hallCloseReady = true;
