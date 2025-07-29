@@ -76,19 +76,19 @@ void loop() {
 
   // LED Feedback
 
-  // LED 1 (PWM Blue) shows current
+  // LED 2 (PWM Blue) shows current
   int blueBrightness = map(filteredCurrent, 20, currentThreshold, 0, 255);
   blueBrightness = constrain(blueBrightness, 0, 255);
-  analogWrite(blue1Pin, blueBrightness);
-  analogWrite(red1Pin, 0);
-  analogWrite(green1Pin, 0);
+  analogWrite(blue2Pin, blueBrightness);
+  analogWrite(red2Pin, 0);
+  analogWrite(green2Pin, 0);
 
-  // LED 2 (Blue) lights up if either Hall sensor is active
+  // LED 1 (Red) lights up if either Hall sensor is active
   bool hallActive = hallOpenLatched || hallCloseLatched;
 
-  analogWrite(blue2Pin, hallActive ? 255 : 0);   // Turn on blue if Hall triggered
-  analogWrite(green2Pin, 0);
-  analogWrite(red2Pin, 0);
+  analogWrite(red1Pin, hallActive ? 255 : 0);   // Turn on red if Hall triggered
+  analogWrite(green1Pin, 0);
+  analogWrite(blue1Pin, 0);
 
   // Hall Latching Logic
   if (!handClosed) { // Opening
