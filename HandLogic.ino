@@ -86,7 +86,7 @@ void loop() {
 
   // LED Feedback
 
-  // LED 2 shows status
+  // LED 2 (status LED): default is solid blue
   if (emgFlashActive && (now - emgFlashStartTime < emgFlashDuration)) {
     // Flash red
     analogWrite(red2Pin, 255);
@@ -98,12 +98,10 @@ void loop() {
     analogWrite(green2Pin, 255);
     analogWrite(blue2Pin, 0);
   } else {
-    // Return to blue current-based feedback
+    // Default state: solid blue
     emgFlashActive = false;
     hallFlashActive = false;
-    int blueBrightness = map(filteredCurrent, 20, currentThreshold, 0, 255);  // higher current = brighter
-    blueBrightness = constrain(blueBrightness, 0, 255);
-    analogWrite(blue2Pin, blueBrightness);
+    analogWrite(blue2Pin, 255);
     analogWrite(red2Pin, 0);
     analogWrite(green2Pin, 0);
   }
